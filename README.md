@@ -1,14 +1,11 @@
-# bff
+# SDK Crypto Ecosystem backend for frontend (BFF)
 
-This project was created using the [Ktor Project Generator](https://start.ktor.io).
-
-Here are some useful links to get you started:
-
-- [Ktor Documentation](https://ktor.io/docs/home.html)
-- [Ktor GitHub page](https://github.com/ktorio/ktor)
-- The [Ktor Slack chat](https://app.slack.com/client/T09229ZC6/C0A974TJ9). You'll need to [request an invite](https://surveys.jetbrains.com/s3/kotlin-slack-sign-up) to join.
+Case study of BFF for the [SDK ecosystem](https://github.com/kotoMJ/android-sdk-crypto-ecosystem).
 
 ## Features
+
+The main purpose of this backend is to handle requests with public API keys together with the Google Play Integrity token
+and use them to call services with real API key not exposed via frontend.
 
 Here's a list of features included in this project:
 

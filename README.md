@@ -2,6 +2,10 @@
 
 Case study of BFF for the [SDK ecosystem](https://github.com/kotoMJ/android-sdk-crypto-ecosystem).
 
+This is a classic "Backend for Frontend" (BFF) pattern.   
+A lightweight server that acts as a gatekeeper, verifying the Android device's integrity 
+before allowing access to a protected upstream service (API under real API key).
+
 ## Features
 
 The main purpose of this backend is to handle requests with public API keys together with the Google Play Integrity token

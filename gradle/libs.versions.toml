@@ -6,6 +6,10 @@ versions = "0.53.0"
 
 integrity = "v1-rev20231211-2.0.0"
 oauth2http = "1.20.0"
+
+spotless = "6.25.0"
+detekt = "1.23.6"
+
 [libraries]
 
 
@@ -35,3 +39,6 @@ kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
 versions = { id = "com.github.ben-manes.versions", version.ref = "versions" } #Check for latest version
+
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

@@ -1,16 +1,37 @@
 [versions]
-kotlin = "2.2.21"
-ktor = "3.3.2"
-logback = "1.4.14"
+kotlin = "2.3.0"
+ktor = "3.3.3"
+logback = "1.5.23"
+versions = "0.53.0"
 
+integrity = "v1-rev20231211-2.0.0"
+oauth2http = "1.20.0"
 [libraries]
+
+
+
+# Ktor Server
 ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
 ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
+ktor-server-negoriation = { module = "io.ktor:ktor-server-content-negotiation-jvm", version.ref = "ktor" }
+ktor-serialization = { module = "io.ktor:ktor-serialization-kotlinx-json-jvm", version.ref = "ktor" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 ktor-server-config-yaml = { module = "io.ktor:ktor-server-config-yaml", version.ref = "ktor" }
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
+
+# Ktor Client (to call the News Service)
+ktor-client-core = { module = "io.ktor:ktor-client-core-jvm", version.ref = "ktor" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio-jvm", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation-jvm", version.ref = "ktor" }
+
+# Google Play Integrity API (Server-side)
+google-playintegrity = { module = "com.google.apis:google-api-services-playintegrity", version.ref = "integrity" }
+google-oauth2-http = { module = "com.google.auth:google-auth-library-oauth2-http", version.ref = "oauth2http" }
+
+# Test
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
+versions = { id = "com.github.ben-manes.versions", version.ref = "versions" } #Check for latest version

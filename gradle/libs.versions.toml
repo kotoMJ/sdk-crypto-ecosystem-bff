@@ -4,8 +4,8 @@ ktor = "3.3.3"
 logback = "1.5.23"
 versions = "0.53.0"
 
-integrity = "v1-rev20231211-2.0.0"
-oauth2http = "1.20.0"
+integrity = "v1-rev20250828-2.0.0"
+oauth2http = "1.41.0"
 
 spotless = "6.25.0"
 detekt = "1.23.6"
@@ -42,3 +42,5 @@ versions = { id = "com.github.ben-manes.versions", version.ref = "versions" } #C
 
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+
+serialization = {id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin"}

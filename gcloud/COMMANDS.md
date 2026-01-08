@@ -48,6 +48,7 @@ printf "YOUR_REAL_API_KEY" | gcloud secrets versions add news-api-key --data-fil
 ## Deploy to Cloud Run
 Starts the server using the docker image and the secrets.
 
+```
 gcloud run deploy bff-service \
 --image=us-central1-docker.pkg.dev/bff-sdk-crypto-ecosystem/bff-repo/bff-service:v1 \
 --region=us-central1 \
@@ -55,6 +56,7 @@ gcloud run deploy bff-service \
 --allow-unauthenticated \
 --port=8080 \
 --set-secrets="CRYPTO_SDK_NEWS_API_KEY=news-api-key:latest"
+```
 
 ## Pause(Stop) the service
 ```

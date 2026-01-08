@@ -21,15 +21,18 @@ gcloud secrets create google-sa-json --replication-policy="automatic"
 ## Grant permissions
 
 ### Allow Cloud Build to save images to Artifact Registry
+```
 gcloud projects add-iam-policy-binding bff-sdk-crypto-ecosystem \
 --member="serviceAccount:XYZ-compute@developer.gserviceaccount.com" \
 --role="roles/artifactregistry.writer"
+```
 
 ### Allow Cloud Run to read Secrets
+```
 gcloud projects add-iam-policy-binding bff-sdk-crypto-ecosystem \
 --member="serviceAccount:XYZ-compute@developer.gserviceaccount.com" \
 --role="roles/secretmanager.secretAccessor"
-
+```
 
 # Service commands
 

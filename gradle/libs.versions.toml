@@ -22,11 +22,14 @@ ktor-serialization = { module = "io.ktor:ktor-serialization-kotlinx-json-jvm", v
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 ktor-server-config-yaml = { module = "io.ktor:ktor-server-config-yaml", version.ref = "ktor" }
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
+ktor-server-rate-limit = { module = "io.ktor:ktor-server-rate-limit", version.ref = "ktor" }
 
 # Ktor Client (to call the News Service)
 ktor-client-core = { module = "io.ktor:ktor-client-core-jvm", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio-jvm", version.ref = "ktor" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation-jvm", version.ref = "ktor" }
+
+
 
 # Google Play Integrity API (Server-side)
 google-playintegrity = { module = "com.google.apis:google-api-services-playintegrity", version.ref = "integrity" }
@@ -43,4 +46,4 @@ versions = { id = "com.github.ben-manes.versions", version.ref = "versions" } #C
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 
-serialization = {id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin"}
+serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

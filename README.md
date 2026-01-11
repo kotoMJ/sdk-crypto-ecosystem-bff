@@ -13,9 +13,11 @@ and use them to call services with real API key not exposed via frontend.
 
 Here's a list of features included in this project:
 
-| Name                                               | Description                                                 |
-| ----------------------------------------------------|------------------------------------------------------------- |
-| [Routing](https://start.ktor.io/p/routing-default) | Allows to define structured routes and associated handlers. |
+| Name                                                            | Description                                                                |
+|-----------------------------------------------------------------|----------------------------------------------------------------------------|
+| [/](https://bff-service-1029057924274.us-central1.run.app/)     | (GET)Root endpoint detecting BFF is alive.                                 |
+| [/test](https://bff-service-1029057924274.us-central1.run.app/) | (GET) Dummy test endpoint.                                                 |
+| [/api/news](https://bff-service-1029057924274.us-central1.run.app/api/news) | (POST) https://newsapi.org/v2/ proxy guarded by Google Play Integrity API. |
 
 ## Building & Running
 

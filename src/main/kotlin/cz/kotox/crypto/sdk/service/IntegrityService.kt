@@ -37,12 +37,6 @@ class IntegrityService {
         token: String,
         packageName: String,
     ): Boolean {
-        // Dev Bypass
-        if (token == "skip-verification") {
-            logger.info("Skipping verification for Dev testing")
-            return true
-        }
-
         return try {
             val decodeRequest = DecodeIntegrityTokenRequest().setIntegrityToken(token)
             val response =

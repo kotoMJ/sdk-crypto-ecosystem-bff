@@ -40,14 +40,13 @@ class IntegrityService(
     fun verifyToken(
         token: String,
         packageName: String,
-        cloudProjectNumber: Long,
         remoteHost: String,
     ): Boolean {
         return try {
             val decodeRequest = DecodeIntegrityTokenRequest().setIntegrityToken(token)
             val response =
                 googleClient.v1()
-                    .decodeIntegrityToken("projects/$cloudProjectNumber/apps/$packageName", decodeRequest)
+                    .decodeIntegrityToken(packageName, decodeRequest)
                     .execute()
 
             val verdict = response.tokenPayloadExternal

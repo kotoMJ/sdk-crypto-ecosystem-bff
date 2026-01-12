@@ -68,10 +68,6 @@ fun Application.configureRouting() {
 
     val adminBypassSecret: String = System.getenv("BFF_CRYPTO_ADMIN_BYPASS_SECRET")
 
-    val cloudProjectNumber: Long =
-        System.getenv("GCP_PROJECT_NUMBER")?.toLongOrNull()
-            ?: throw MissingConfigException("GCP_PROJECT_NUMBER is required")
-
     routing {
         get("/") {
             call.respondText("Kotox crypto BFF here!")
@@ -105,7 +101,6 @@ fun Application.configureRouting() {
                             integrityService.verifyToken(
                                 token = request.integrityToken,
                                 packageName = "cz.kotox.sdk.crypto.app",
-                                cloudProjectNumber = cloudProjectNumber,
                                 remoteHost = call.request.origin.remoteHost,
                             )
                         }

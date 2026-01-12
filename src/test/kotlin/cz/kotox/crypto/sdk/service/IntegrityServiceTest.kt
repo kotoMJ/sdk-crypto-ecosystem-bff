@@ -37,7 +37,7 @@ class IntegrityServiceTest {
             integrityService.verifyToken(
                 token = "valid_token",
                 packageName = "cz.kotox.crypto",
-                cloudProjectNumber = 123L,
+                remoteHost = "localhost",
             )
 
         assertTrue(result)
@@ -58,7 +58,7 @@ class IntegrityServiceTest {
             integrityService.verifyToken(
                 token = "risky_token",
                 packageName = "cz.kotox.crypto",
-                cloudProjectNumber = 123L,
+                remoteHost = "localhost",
             )
 
         assertFalse(result)
@@ -79,7 +79,7 @@ class IntegrityServiceTest {
             integrityService.verifyToken(
                 token = "sideloaded_token",
                 packageName = "cz.kotox.crypto",
-                cloudProjectNumber = 123L,
+                remoteHost = "localhost",
             )
 
         assertFalse(result)

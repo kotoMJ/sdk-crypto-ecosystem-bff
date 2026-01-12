@@ -17,7 +17,6 @@ Create Secret "Containers": Creates the empty safe boxes for your sensitive data
 gcloud secrets create news-api-key --replication-policy="automatic"
 gcloud secrets create google-sa-json --replication-policy="automatic"
 gcloud secrets create bff-crypto-admin-bypass-secret --replication-policy="automatic"
-gcloud secrets create gcp-project-number --replication-policy="automatic"
 ```
 
 ## Grant permissions
@@ -49,7 +48,6 @@ gcloud builds submit --tag us-central1-docker.pkg.dev/bff-sdk-crypto-ecosystem/b
 ```
 printf "YOUR_REAL_API_KEY" | gcloud secrets versions add news-api-key --data-file=- 
 printf "YOUR_REAL_ADMIN_SECRET" | gcloud secrets versions add bff-crypto-admin-bypass-secret --data-file=-
-printf "YOUR_REAL_GCP_PROJECT_NUMBER" | gcloud secrets versions add gcp-project-number --data-file=-
 ```
 
 ## Deploy to Cloud Run
@@ -62,7 +60,7 @@ gcloud run deploy bff-service \
 --platform=managed \
 --allow-unauthenticated \
 --port=8080 \
---set-secrets="GCP_PROJECT_NUMBER=gcp-project-number:latest,CRYPTO_SDK_NEWS_API_KEY=news-api-key:latest,BFF_CRYPTO_ADMIN_BYPASS_SECRET=bff-crypto-admin-bypass-secret:latest"
+--set-secrets="CRYPTO_SDK_NEWS_API_KEY=news-api-key:latest,BFF_CRYPTO_ADMIN_BYPASS_SECRET=bff-crypto-admin-bypass-secret:latest"
 ```
 
 ## Pause(Stop) the service

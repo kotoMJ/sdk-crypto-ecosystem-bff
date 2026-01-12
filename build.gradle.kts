@@ -41,6 +41,21 @@ tasks.withType<com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
     }
 }
 
+val mockitoAgent: Configuration by configurations.creating
+
+tasks.withType<Test> {
+    // This allows Mockito to self-attach without needing the -javaagent path
+    jvmArgs("-XX:+EnableDynamicAgentLoading", "-Xshare:off")
+
+    // This suppresses the specific warning about serviceability tools
+    jvmArgs("-Djdk.instrument.traceUsage")
+
+    // Optional: useful for Ktor tests to ensure you see enough detail on failure
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
+}
+
 fun isNonStable(version: String): Boolean {
     val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.uppercase().contains(it) }
     val regex = "^[0-9,.v-]+(-r)?$".toRegex()

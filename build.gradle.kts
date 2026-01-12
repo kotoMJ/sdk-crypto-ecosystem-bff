@@ -30,6 +30,7 @@ dependencies {
     implementation(libs.ktor.server.rate.limit)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)
+    testImplementation(libs.bundles.mockito.test.suite)
 }
 
 tasks.withType<com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask> {

@@ -11,11 +11,17 @@ import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
 import java.util.Base64
 
-class IntegrityService {
+class IntegrityService(
+    private val injectedClient: PlayIntegrity? = null,
+) {
     private val logger = LoggerFactory.getLogger(IntegrityService::class.java)
 
     // Initialize the Google Client lazily
     private val googleClient: PlayIntegrity by lazy {
+        injectedClient ?: createDefaultClient()
+    }
+
+    private fun createDefaultClient(): PlayIntegrity {
         val serviceAccountJson =
             System.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
                 ?: error("Missing GOOGLE_SERVICE_ACCOUNT_JSON env var")
@@ -25,7 +31,7 @@ class IntegrityService {
                 ByteArrayInputStream(Base64.getDecoder().decode(serviceAccountJson)),
             ).createScoped(listOf(PlayIntegrityScopes.PLAYINTEGRITY))
 
-        PlayIntegrity.Builder(
+        return PlayIntegrity.Builder(
             GoogleNetHttpTransport.newTrustedTransport(),
             GsonFactory.getDefaultInstance(),
             HttpCredentialsAdapter(credentials),

@@ -41,8 +41,6 @@ tasks.withType<com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
     }
 }
 
-val mockitoAgent: Configuration by configurations.creating
-
 tasks.withType<Test> {
     // This allows Mockito to self-attach without needing the -javaagent path
     jvmArgs("-XX:+EnableDynamicAgentLoading", "-Xshare:off")

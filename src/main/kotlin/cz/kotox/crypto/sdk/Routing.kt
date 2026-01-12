@@ -1,5 +1,6 @@
 package cz.kotox.crypto.sdk
 
+import cz.kotox.crypto.sdk.exception.MissingConfigException
 import cz.kotox.crypto.sdk.model.IntegrityCheckRequest
 import cz.kotox.crypto.sdk.service.IntegrityService
 import cz.kotox.crypto.sdk.service.NewsService
@@ -12,9 +13,12 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.application.log
+import io.ktor.server.plugins.forwardedheaders.XForwardedHeaders
+import io.ktor.server.plugins.origin
 import io.ktor.server.plugins.ratelimit.RateLimit
 import io.ktor.server.plugins.ratelimit.RateLimitName
 import io.ktor.server.plugins.ratelimit.rateLimit
+import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
@@ -38,6 +42,17 @@ fun Application.configureRouting() {
         }
     }
 
+    install(StatusPages) {
+        exception<MissingConfigException> { call, cause ->
+            call.respond(HttpStatusCode.InternalServerError, cause.message ?: "Configuration Error")
+        }
+    }
+
+    install(XForwardedHeaders) {
+        // Optional: In Cloud Run, the first IP in the list is usually the client.
+        // If you are behind multiple proxies, you might need extra configuration.
+    }
+
     // To implement the real News API call, we need to: ... check gemini
     // Initialize HTTP Client (for fetching upstream news)
     // val httpClient =
@@ -51,7 +66,11 @@ fun Application.configureRouting() {
     val integrityService = IntegrityService()
     val newsService = NewsService(httpClient)
 
-    val adminBypassSecret = System.getenv("BFF_CRYPTO_ADMIN_BYPASS_SECRET")
+    val adminBypassSecret: String = System.getenv("BFF_CRYPTO_ADMIN_BYPASS_SECRET")
+
+    val cloudProjectNumber: Long =
+        System.getenv("GCP_PROJECT_NUMBER")?.toLongOrNull()
+            ?: throw MissingConfigException("GCP_PROJECT_NUMBER is required")
 
     routing {
         get("/") {
@@ -73,20 +92,21 @@ fun Application.configureRouting() {
                     val bypassHeader = call.request.headers["X-Kotox-Bypass-Key"]
 
                     val isAuthorizedBypass =
-                        !adminBypassSecret.isNullOrBlank() &&
+                        adminBypassSecret.isNotBlank() &&
                             bypassHeader == adminBypassSecret
 
                     val isValid =
                         if (isAuthorizedBypass) {
                             call.application.environment.log.warn(
-                                "Authorized Bypass Used by: ${call.request.local.remoteHost}",
+                                "Authorized Bypass Used by: ${call.request.origin.remoteHost}",
                             )
                             true
                         } else {
-                            // Standard flow for real users
                             integrityService.verifyToken(
                                 token = request.integrityToken,
                                 packageName = "cz.kotox.sdk.crypto.app",
+                                cloudProjectNumber = cloudProjectNumber,
+                                remoteHost = call.request.origin.remoteHost,
                             )
                         }
                     // --- SECURE BYPASS LOGIC END ---

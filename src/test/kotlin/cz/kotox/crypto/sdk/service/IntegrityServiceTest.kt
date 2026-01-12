@@ -33,7 +33,12 @@ class IntegrityServiceTest {
             )
         setupMockCall(response)
 
-        val result = integrityService.verifyToken("valid_token", "cz.kotox.crypto")
+        val result =
+            integrityService.verifyToken(
+                token = "valid_token",
+                packageName = "cz.kotox.crypto",
+                cloudProjectNumber = 123L,
+            )
 
         assertTrue(result)
     }
@@ -49,7 +54,12 @@ class IntegrityServiceTest {
             )
         setupMockCall(response)
 
-        val result = integrityService.verifyToken("risky_token", "cz.kotox.crypto")
+        val result =
+            integrityService.verifyToken(
+                token = "risky_token",
+                packageName = "cz.kotox.crypto",
+                cloudProjectNumber = 123L,
+            )
 
         assertFalse(result)
     }
@@ -65,7 +75,12 @@ class IntegrityServiceTest {
             )
         setupMockCall(response)
 
-        val result = integrityService.verifyToken("sideloaded_token", "cz.kotox.crypto")
+        val result =
+            integrityService.verifyToken(
+                token = "sideloaded_token",
+                packageName = "cz.kotox.crypto",
+                cloudProjectNumber = 123L,
+            )
 
         assertFalse(result)
     }

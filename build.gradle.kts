@@ -28,6 +28,8 @@ dependencies {
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.config.yaml)
     implementation(libs.ktor.server.rate.limit)
+    implementation(libs.ktor.server.status.pages)
+    implementation(libs.ktor.server.forwarded.header)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)
     testImplementation(libs.bundles.mockito.test.suite)

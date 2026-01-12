@@ -8,8 +8,6 @@ import com.google.api.services.playintegrity.v1.model.DecodeIntegrityTokenReques
 import com.google.auth.http.HttpCredentialsAdapter
 import com.google.auth.oauth2.GoogleCredentials
 import org.slf4j.LoggerFactory
-import java.io.ByteArrayInputStream
-import java.util.Base64
 
 class IntegrityService(
     private val injectedClient: PlayIntegrity? = null,
@@ -22,14 +20,14 @@ class IntegrityService(
     }
 
     private fun createDefaultClient(): PlayIntegrity {
-        val serviceAccountJson =
-            System.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
-                ?: error("Missing GOOGLE_SERVICE_ACCOUNT_JSON env var")
-
+        /**
+         * This automatically finds credentials based on the environment
+         * No need for GOOGLE_SERVICE_ACCOUNT_JSON env var on GCP!
+         * For deploy on AWS, Azure, On-prem, ... use Workload Identity Federation
+         */
         val credentials =
-            GoogleCredentials.fromStream(
-                ByteArrayInputStream(Base64.getDecoder().decode(serviceAccountJson)),
-            ).createScoped(listOf(PlayIntegrityScopes.PLAYINTEGRITY))
+            GoogleCredentials.getApplicationDefault()
+                .createScoped(listOf(PlayIntegrityScopes.PLAYINTEGRITY))
 
         return PlayIntegrity.Builder(
             GoogleNetHttpTransport.newTrustedTransport(),
@@ -38,16 +36,18 @@ class IntegrityService(
         ).setApplicationName("ConferenceDemo").build()
     }
 
-    @Suppress("TooGenericExceptionCaught", "MaxLineLength")
+    @Suppress("TooGenericExceptionCaught", "MaxLineLength", "ktlint:standard:max-line-length", "MagicNumber")
     fun verifyToken(
         token: String,
         packageName: String,
+        cloudProjectNumber: Long,
+        remoteHost: String,
     ): Boolean {
         return try {
             val decodeRequest = DecodeIntegrityTokenRequest().setIntegrityToken(token)
             val response =
                 googleClient.v1()
-                    .decodeIntegrityToken(packageName, decodeRequest)
+                    .decodeIntegrityToken("projects/$cloudProjectNumber/apps/$packageName", decodeRequest)
                     .execute()
 
             val verdict = response.tokenPayloadExternal
@@ -103,7 +103,31 @@ class IntegrityService(
              */
             val isAppLicensed = verdict.accountDetails.appLicensingVerdict == "LICENSED"
 
-            isAppRecognized && isDeviceSecure && isAppLicensed && hasNoActiveRisk
+            val finalResult = isAppRecognized && isDeviceSecure && isAppLicensed && hasNoActiveRisk
+
+            if (!finalResult) {
+                logger.warn(
+                    "Integrity Check FAILED for package: $packageName. " +
+                        "Reason: AppRecognized=$isAppRecognized, DeviceSecure=$isDeviceSecure, Licensed=$isAppLicensed, NoRisk=$hasNoActiveRisk",
+                )
+                logger.warn(
+                    """
+                    [Integrity Failure Detail]
+                    User/IP: $remoteHost
+                    Package: ${verdict.requestDetails.requestPackageName}
+                    Cert Digest: ${verdict.appIntegrity.certificateSha256Digest?.take(10)}...
+                    Timestamp: ${verdict.requestDetails.timestampMillis}
+
+                    Verdicts:
+                    - App: ${verdict.appIntegrity.appRecognitionVerdict}
+                    - Device: ${verdict.deviceIntegrity.deviceRecognitionVerdict}
+                    - Account: ${verdict.accountDetails.appLicensingVerdict}
+                    - Environment Risks: ${verdict.environmentDetails?.appAccessRiskVerdict?.appsDetected ?: "None"}
+                    """.trimIndent(),
+                )
+            }
+
+            return finalResult
         } catch (e: Exception) {
             logger.error("Integrity check failed", e)
             false

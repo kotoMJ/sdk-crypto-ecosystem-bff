@@ -8,8 +8,10 @@ before allowing access to a protected upstream service (API under real API key).
 
 ## Features
 
-The main purpose of this backend is to handle requests with public API keys together with the Google Play Integrity token
-and use them to call services with real API key not exposed via frontend.
+The main purpose of this backend is to securely handle all secret API keys on backend side instead of client side.
+
+Mobile application creates token via Google Play Integrity API, backend verify app identity via Google Play Integrity API and eventually
+triggers proxy request to external API secured by real API key (the secret).
 
 Here's a list of features included in this project:
 

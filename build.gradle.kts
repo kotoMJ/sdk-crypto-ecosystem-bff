@@ -28,8 +28,11 @@ dependencies {
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.config.yaml)
     implementation(libs.ktor.server.rate.limit)
+    implementation(libs.ktor.server.status.pages)
+    implementation(libs.ktor.server.forwarded.header)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)
+    testImplementation(libs.bundles.mockito.test.suite)
 }
 
 tasks.withType<com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask> {
@@ -37,6 +40,19 @@ tasks.withType<com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
     gradleReleaseChannel = "current"
     rejectVersionIf {
         isNonStable(candidate.version)
+    }
+}
+
+tasks.withType<Test> {
+    // This allows Mockito to self-attach without needing the -javaagent path
+    jvmArgs("-XX:+EnableDynamicAgentLoading", "-Xshare:off")
+
+    // This suppresses the specific warning about serviceability tools
+    jvmArgs("-Djdk.instrument.traceUsage")
+
+    // Optional: useful for Ktor tests to ensure you see enough detail on failure
+    testLogging {
+        events("passed", "skipped", "failed")
     }
 }
 

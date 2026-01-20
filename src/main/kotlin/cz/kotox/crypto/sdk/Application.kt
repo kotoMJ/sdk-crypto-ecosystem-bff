@@ -16,6 +16,9 @@ fun main(args: Array<String>) {
 
         options.tracesSampleRate = 1.0 // Adjust these for production
         options.isEnableUncaughtExceptionHandler = true
+        options.isDebug = true
+        // This allows Sentry to capture headers like sentry-trace, baggage, and others
+        options.isSendDefaultPii = true
     }
 
     EngineMain.main(args)

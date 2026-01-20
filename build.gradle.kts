@@ -30,6 +30,7 @@ dependencies {
     implementation(libs.ktor.server.rate.limit)
     implementation(libs.ktor.server.status.pages)
     implementation(libs.ktor.server.forwarded.header)
+    implementation(libs.ktor.server.call.logging)
 
     implementation(platform(libs.sentry.bom))
     implementation(libs.sentry.core)

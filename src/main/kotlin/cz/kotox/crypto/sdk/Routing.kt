@@ -14,6 +14,7 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
+import io.sentry.Sentry
 
 @Suppress("LongMethod")
 fun Application.configureRouting(
@@ -26,6 +27,7 @@ fun Application.configureRouting(
             call.respondText("Kotox crypto BFF here!")
         }
         get("/test") {
+            Sentry.captureMessage("BFF Test Route Accessed")
             call.respondText("Test accepted!")
         }
 

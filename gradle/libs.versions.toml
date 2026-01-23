@@ -47,7 +47,7 @@ sentry-bom = { group = "io.sentry", name = "sentry-bom", version.ref = "sentry" 
 sentry-core = { group = "io.sentry", name = "sentry" }
 sentry-kotlin = { group = "io.sentry", name = "sentry-kotlin-extensions" }
 sentry-ktor-client = { group = "io.sentry", name = "sentry-ktor-client" }
-#sentry-ktor-server = { group = "io.sentry", name = "sentry-ktor-server-jakarta" }
+#sentry-ktor-server = { group = "io.sentry", name = "sentry-ktor-server" }
 
 # Test
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }

@@ -21,7 +21,6 @@ import io.sentry.TransactionContext
 import io.sentry.TransactionOptions
 import io.sentry.kotlin.SentryContext
 import kotlinx.coroutines.withContext
-import org.slf4j.LoggerFactory
 
 private const val MAXIMUM_SENTRY_FLUSH_TIMEOUT_MS = 5000L
 
@@ -32,8 +31,8 @@ fun initSentry() {
                 "SENTRY_DNS_CRYPTO_TRACKER_BFF env is missing"
             }
         options.dsn = dsnBff
-        LoggerFactory.getLogger("SentryBeforeSend")
-            .info("SENTRY_DNS_CRYPTO_TRACKER_BFF:[$dsnBff]")
+//        LoggerFactory.getLogger("SentryBeforeSend")
+//            .info("SENTRY_DNS_CRYPTO_TRACKER_BFF:[$dsnBff]")
 
         options.tracesSampleRate = 1.0 // Adjust these for production
         // options.isEnableUncaughtExceptionHandler = true
@@ -43,8 +42,8 @@ fun initSentry() {
 
         options.setBeforeSend { event, hint ->
             // This will log for ANY event (error or transaction) before it's sent.
-            LoggerFactory.getLogger("SentryBeforeSend")
-                .info("--- Sentry BeforeSend triggered for event: ${event.eventId} ---")
+//            LoggerFactory.getLogger("SentryBeforeSend")
+//                .info("--- Sentry BeforeSend triggered for event: ${event.eventId} ---")
             event // Return the event unmodified
         }
     }
@@ -58,7 +57,6 @@ fun initSentry() {
 @Suppress("TooGenericExceptionCaught", "LongMethod", "MaxLineLength", "MagicNumber")
 fun Application.configureSentryTracing() {
     intercept(ApplicationCallPipeline.Monitoring) {
-        initSentry()
         application.log.info("TRACE: Interceptor triggered for ${call.request.uri}")
 
         val sentryTraceHeader = call.request.header("sentry-trace")
@@ -128,10 +126,10 @@ fun Application.configureSentryTracing() {
                 throw e
             } finally {
                 application.log.info("DEBUG [Sentry]: Finishing trace for ${call.request.uri}")
-                Sentry.addBreadcrumb("Finishing transaction for ${call.request.uri}")
+                // Sentry.addBreadcrumb("Finishing transaction for ${call.request.uri}")
                 transaction.finish()
 
-                LoggerFactory.getLogger("io.sentry.transport").debug("--- MANUAL TRANSPORT LOG TEST ---")
+                // LoggerFactory.getLogger("io.sentry.transport").debug("--- MANUAL TRANSPORT LOG TEST ---")
 
                 try {
                     // FORCE SEND: Wait up to MAXIMUM_SENTRY_FLUSH_TIMEOUT_MS for the background worker to flush the transaction

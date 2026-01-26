@@ -17,7 +17,7 @@ fun main(args: Array<String>) {
  *
  */
 fun Application.module() {
-//    initSentry()
+    initSentry()
 
     val client = this.createHttpClient()
     val newsService = NewsService(client)

@@ -1,0 +1,15 @@
+# Ignore sensitive config files in any directory
+**/*.conf
+**/*.env
+**/*.properties
+
+# Specifically target Ktor/JVM secrets
+**/application.conf
+**/local.properties
+**/secrets.*
+
+# Ignore build artifacts and credentials
+**/build/
+**/.idea/
+**/key.jks
+**/keystore

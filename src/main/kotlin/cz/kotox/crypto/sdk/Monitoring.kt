@@ -21,19 +21,32 @@ import io.sentry.TransactionContext
 import io.sentry.TransactionOptions
 import io.sentry.kotlin.SentryContext
 import kotlinx.coroutines.withContext
+import org.slf4j.LoggerFactory
+
+private const val MAXIMUM_SENTRY_FLUSH_TIMEOUT_MS = 5000L
 
 fun initSentry() {
     Sentry.init { options ->
-        options.dsn = "https://182bf04220e37772a37194d801c0624a@o4510727626883072.ingest.de.sentry.io/4510727742554192"
-//            requireNotNull(System.getenv("SENTRY_DNS_CRYPTO_TRACKER_BFF")) {
-//                "SENTRY_DNS_CRYPTO_TRACKER_BFF env is missing"
-//            }
+        val dsnBff =
+            requireNotNull(System.getenv("SENTRY_DNS_CRYPTO_TRACKER_BFF")) {
+                "SENTRY_DNS_CRYPTO_TRACKER_BFF env is missing"
+            }
+        options.dsn = dsnBff
+        LoggerFactory.getLogger("SentryBeforeSend")
+            .info("SENTRY_DNS_CRYPTO_TRACKER_BFF:[$dsnBff]")
 
         options.tracesSampleRate = 1.0 // Adjust these for production
         // options.isEnableUncaughtExceptionHandler = true
-        options.isDebug = true
+        options.isDebug = false
         // This allows Sentry to capture headers like sentry-trace, baggage, and others
         options.isSendDefaultPii = true
+
+        options.setBeforeSend { event, hint ->
+            // This will log for ANY event (error or transaction) before it's sent.
+            LoggerFactory.getLogger("SentryBeforeSend")
+                .info("--- Sentry BeforeSend triggered for event: ${event.eventId} ---")
+            event // Return the event unmodified
+        }
     }
 }
 
@@ -45,6 +58,7 @@ fun initSentry() {
 @Suppress("TooGenericExceptionCaught", "LongMethod", "MaxLineLength", "MagicNumber")
 fun Application.configureSentryTracing() {
     intercept(ApplicationCallPipeline.Monitoring) {
+        initSentry()
         application.log.info("TRACE: Interceptor triggered for ${call.request.uri}")
 
         val sentryTraceHeader = call.request.header("sentry-trace")
@@ -56,47 +70,32 @@ fun Application.configureSentryTracing() {
         val baggageHeader = call.request.header("baggage")
         application.log.warn("DEBUG [Sentry]: baggageHeader: $baggageHeader")
 
-        // 1. Continue the trace or start a new one
-        // Sentry.continueTrace handles the parsing of IDs for you.
-        // If it returns null, it's often due to a malformed header or sampling.
-        val contextContinue: TransactionContext? = Sentry.continueTrace(sentryTraceHeader, listOfNotNull(baggageHeader))
-
+        // 1. Let Sentry do the heavy lifting. This automatically links IDs from Android.
         val context =
-            if (contextContinue == null) {
-                application.log.warn("DEBUG [Sentry]: contextContinue is null!")
-                val parts = sentryTraceHeader?.split("-")
-                application.log.info("DEBUG [Sentry]: parts:$parts")
-                if (parts != null && parts.size >= 2) {
-                    val traceId = io.sentry.protocol.SentryId(parts[0])
-                    application.log.info("DEBUG [Sentry]: traceId:$traceId")
-                    val parentSpanId = io.sentry.SpanId(parts[1])
-                    application.log.info("DEBUG [Sentry]: parentSpanId:$parentSpanId")
-                    val sampled = if (parts.size > 2) parts[2] == "1" else null
-                    application.log.info("DEBUG [Sentry]: sampled:$sampled")
+            Sentry.continueTrace(sentryTraceHeader, listOfNotNull(baggageHeader))
+                ?: TransactionContext("${call.request.httpMethod.value} ${call.request.uri}", "http.server")
 
-                    // NEW: Manually parse baggage to ensure stitching  and use it as the 'glue' for stitching
-                    val baggage = io.sentry.Baggage.fromHeader(baggageHeader)
-                    application.log.info("DEBUG [Sentry]: baggage:$baggage")
-                    TransactionContext(
-                        traceId,
-                        io.sentry.SpanId(),
-                        parentSpanId,
-                        io.sentry.TracesSamplingDecision(sampled ?: true),
-                        baggage,
-                    ).apply {
-                        name = "${call.request.httpMethod.value} ${call.request.uri}"
-                        operation = "http.server"
-                    }
-                } else {
-                    application.log.error("DEBUG [Sentry]: parts not available!")
-                    TransactionContext(
-                        "${call.request.httpMethod.value} ${call.request.uri}",
-                        "http.server",
-                    )
-                }
-            } else {
-                contextContinue
+        val isContinued = context.parentSpanId != null
+        application.log.info("DEBUG [Sentry]: Trace State for ${call.request.uri}")
+        application.log.info("  - Continued from Parent: $isContinued")
+        application.log.info("  - Is Sampled: ${context.samplingDecision?.sampled}")
+        application.log.info("  - Trace ID: ${context.traceId}")
+        application.log.info("  - Parent Span ID: ${context.parentSpanId ?: "NONE (Root)"}")
+
+        if (isContinued) {
+            // If you want to see the specific 'baggage' metadata Sentry extracted
+            application.log.info("  - Baggage: ${context.baggage?.toHeaderString(null)}")
+        }
+
+        // Manually honor the sampling decision from the parent if the SDK didn't pick it up.
+        if (context.sampled == null) {
+            application.log.warn("[Sentry] SDK did not set sampling decision. Manually checking baggage header.")
+            // The baggage header from the client contains 'sentry-sampled=true'
+            if (baggageHeader?.contains("sentry-sampled=true") == true) {
+                application.log.info("[Sentry] Baggage indicates parent was sampled. Forcing sampling decision to 'true'.")
+                context.sampled = true // This ensures the transaction is sent
             }
+        }
 
         // Ensure the transaction name is human-readable in the UI
         context.name = "${call.request.httpMethod.value} ${call.request.uri}"
@@ -114,33 +113,36 @@ fun Application.configureSentryTracing() {
         // startTransaction now receives a non-null TransactionContext
         val transaction = requestScopes.startTransaction(context, options)
 
-        try {
-            // This makes the transaction "Active" for Sentry.getSpan() and children
-            withContext(SentryContext(requestScopes)) {
-                // Now, Sentry.getSpan() (static) should return the transaction
-                proceed()
-            }
-            transaction.status = SpanStatus.OK
-        } catch (e: Throwable) {
-            application.log.error("TRACE: Error in interceptor: ${e.message}")
-            transaction.throwable = e
-            transaction.status = SpanStatus.INTERNAL_ERROR
-            throw e
-        } finally {
-            application.log.info("DEBUG [Sentry]: Finishing trace for ${call.request.uri}")
-            transaction.finish()
+        // application.testSentryErrorEvent()
 
+        withContext(SentryContext(requestScopes)) {
             try {
-                // FORCE SEND: Wait up to 2 seconds for the background worker to flush the transaction
-                // This is vital for serverless environments.
-                Sentry.flush(2000)
-                application.log.info("DEBUG [Sentry]: Flushed for ${call.request.uri}")
-                // Optional: Clear the transaction from the scope after finishing
-                Sentry.configureScope { it.transaction = null }
-            } catch (e: Exception) {
-                application.log.warn("Sentry: Flush was interrupted: ${e.message}")
+                proceed()
+                transaction.status =
+                    call.response.status()?.let { SpanStatus.fromHttpStatusCode(it.value) } ?: SpanStatus.OK
+            } catch (e: Throwable) {
+                application.log.error("TRACE: Error in interceptor: ${e.message}")
+                Sentry.captureException(e)
+                transaction.throwable = e
+                transaction.status = SpanStatus.INTERNAL_ERROR
+                throw e
+            } finally {
+                application.log.info("DEBUG [Sentry]: Finishing trace for ${call.request.uri}")
+                Sentry.addBreadcrumb("Finishing transaction for ${call.request.uri}")
+                transaction.finish()
+
+                LoggerFactory.getLogger("io.sentry.transport").debug("--- MANUAL TRANSPORT LOG TEST ---")
+
+                try {
+                    // FORCE SEND: Wait up to MAXIMUM_SENTRY_FLUSH_TIMEOUT_MS for the background worker to flush the transaction
+                    // This is vital for serverless environments.
+                    Sentry.flush(MAXIMUM_SENTRY_FLUSH_TIMEOUT_MS)
+                    application.log.info("DEBUG [Sentry]: Flushed for ${call.request.uri}")
+                } catch (e: Exception) {
+                    application.log.warn("Sentry: Flush was interrupted: ${e.message}")
+                }
+                application.log.info("DEBUG [Sentry]: Trace fully synchronized for ${call.request.uri}")
             }
-            application.log.info("DEBUG [Sentry]: Trace fully synchronized for ${call.request.uri}")
         }
     }
 
@@ -162,17 +164,13 @@ fun Application.configureSentryTracing() {
         }
     }
 }
-// fun Application.configureSentryTracing() {
-//    install(StatusPages) {
-//        exception<Throwable> { call, cause ->
-//            // 1. Capture the exception in Sentry
-//            Sentry.captureException(cause)
-//
-//            // 2. Respond to the client (optional: don't leak details in prod)
-//            call.respondText(
-//                text = "500: Internal Server Error",
-//                status = HttpStatusCode.InternalServerError
-//            )
-//        }
-//    }
-// }
+
+@Suppress("TooGenericExceptionCaught", "TooGenericExceptionThrown", "UnusedPrivateMember")
+private fun Application.testSentryErrorEvent() {
+    try {
+        log.info("DEBUG [Sentry]: forcing test event")
+        throw RuntimeException("--- SENTRY FORCED TEST EXCEPTION ---")
+    } catch (e: Exception) {
+        Sentry.captureException(e)
+    }
+}

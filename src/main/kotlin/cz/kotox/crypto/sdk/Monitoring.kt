@@ -88,10 +88,22 @@ fun Application.configureSentryTracing() {
         // Manually honor the sampling decision from the parent if the SDK didn't pick it up.
         if (context.sampled == null) {
             application.log.warn("[Sentry] SDK did not set sampling decision. Manually checking baggage header.")
-            // The baggage header from the client contains 'sentry-sampled=true'
-            if (baggageHeader?.contains("sentry-sampled=true") == true) {
+            // Parse the baggage header using Sentry's Baggage class
+            val baggage = io.sentry.Baggage.fromHeader(baggageHeader)
+
+            // Check the sampled status from the parsed Baggage object
+            if (baggage?.sampled == "true") { // Compare to string "true"
                 application.log.info("[Sentry] Baggage indicates parent was sampled. Forcing sampling decision to 'true'.")
                 context.sampled = true // This ensures the transaction is sent
+            } else if (baggage?.sampled == "false") { // Compare to string "false"
+                application.log.info("[Sentry] Baggage indicates parent was NOT sampled. Forcing sampling decision to 'false'.")
+                context.sampled = false // Explicitly set to false if parent was not sampled
+            } else {
+                // This case covers baggage == null, baggage.sampled == null, or other unexpected string values
+                application.log.info(
+                    "[Sentry] Baggage sampled status is unknown or null. Defaulting to SDK's decision (which is currently null).",
+                )
+                // No change to context.sampled, leaving it as null for the SDK to decide based on tracesSampleRate
             }
         }
 

@@ -27,7 +27,7 @@ private const val MAXIMUM_SENTRY_FLUSH_TIMEOUT_MS = 5000L
 fun initSentry() {
     Sentry.init { options ->
         val dsnBff =
-            requireNotNull(System.getenv("SENTRY_DNS_CRYPTO_TRACKER_BFF")) {
+            requireNotNull(System.getenv("SENTRY_DNS_CRYPTO_TRACKER_BFF_VALUE")) {
                 "SENTRY_DNS_CRYPTO_TRACKER_BFF env is missing"
             }
         options.dsn = dsnBff

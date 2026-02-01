@@ -3,9 +3,7 @@ package cz.kotox.crypto.sdk
 import cz.kotox.crypto.sdk.model.IntegrityCheckRequest
 import cz.kotox.crypto.sdk.service.IntegrityService
 import cz.kotox.crypto.sdk.service.NewsService
-import io.ktor.client.request.header
 import io.ktor.client.request.post
-import io.ktor.client.request.setBody
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.log
@@ -15,9 +13,9 @@ import io.ktor.server.plugins.ratelimit.rateLimit
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
+import io.ktor.server.routing.RoutingContext
 import io.ktor.server.routing.application
 import io.ktor.server.routing.get
-import io.ktor.server.routing.header
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.sentry.Sentry
@@ -60,18 +58,24 @@ fun Application.configureRouting(
         }
 
         @Suppress("TooGenericExceptionCaught")
-        get("/sentryraw") {
-            val client = io.ktor.client.HttpClient()
-            try {
-                val response =
-                    client.post("https://o4510727626883072.ingest.de.sentry.io/api/4510727742554192/envelope/") {
-                        // Sentry requires a specific header for raw ingest
-                        header("X-Sentry-Auth", "Sentry sentry_version=7, sentry_key=182bf04220e37772a37194d801c0624a")
-                        setBody("{}") // Empty envelope
+        rateLimit(RateLimitName("protect-sentry-android")) {
+            post("/sentry/android") {
+                try {
+                    val isValid = isRequestedByAuthorizedApp(adminBypassSecret, integrityService)
+                    if (isValid) {
+                        val dsnAndroid =
+                            requireNotNull(System.getenv("SENTRY_DNS_CRYPTO_TRACKER_ANDROID_VALUE")) {
+                                "SENTRY_DNS_CRYPTO_TRACKER_ANDROID_VALUE env is missing"
+                            }
+
+                        call.respond(dsnAndroid)
+                    } else {
+                        call.respond(HttpStatusCode.Forbidden, "Integrity check failed.")
                     }
-                call.respondText("Direct Post Status: ${response.status}")
-            } catch (e: Exception) {
-                call.respondText("Direct Post FAILED: ${e.message}")
+                } catch (e: Exception) {
+                    call.application.environment.log.error("API Error", e)
+                    call.respond(HttpStatusCode.InternalServerError, "Server error")
+                }
             }
         }
 
@@ -80,30 +84,7 @@ fun Application.configureRouting(
         rateLimit(RateLimitName("protect-news")) {
             post("/api/news") {
                 try {
-                    val request = call.receive<IntegrityCheckRequest>()
-
-                    // --- SECURE BYPASS LOGIC START ---
-                    // We check for a specific HEADER, not the body content.
-                    val bypassHeader = call.request.headers["X-Kotox-Bypass-Key"]
-
-                    val isAuthorizedBypass =
-                        adminBypassSecret.isNotBlank() &&
-                            bypassHeader == adminBypassSecret
-
-                    val isValid =
-                        if (isAuthorizedBypass) {
-                            call.application.environment.log.warn(
-                                "Authorized Bypass Used by: ${call.request.origin.remoteHost}",
-                            )
-                            true
-                        } else {
-                            integrityService.verifyToken(
-                                token = request.integrityToken,
-                                packageName = "cz.kotox.sdk.crypto.app",
-                                remoteHost = call.request.origin.remoteHost,
-                            )
-                        }
-                    // --- SECURE BYPASS LOGIC END ---
+                    val isValid = isRequestedByAuthorizedApp(adminBypassSecret, integrityService)
 
                     if (isValid) {
                         // Step 2: Fetch Data
@@ -119,4 +100,36 @@ fun Application.configureRouting(
             }
         }
     }
+}
+
+private suspend fun RoutingContext.isRequestedByAuthorizedApp(
+    adminBypassSecret: String,
+    integrityService: IntegrityService,
+): Boolean {
+    val request = call.receive<IntegrityCheckRequest>()
+
+    // --- SECURE BYPASS LOGIC START ---
+    // We check for a specific HEADER, not the body content.
+    val bypassHeader = call.request.headers["X-Kotox-Bypass-Key"]
+
+    val isAuthorizedBypass =
+        adminBypassSecret.isNotBlank() &&
+            bypassHeader == adminBypassSecret
+
+    val isValid =
+        if (isAuthorizedBypass) {
+            call.application.environment.log.warn(
+                "Authorized Bypass Used by: ${call.request.origin.remoteHost}",
+            )
+            true
+        } else {
+            integrityService.verifyToken(
+                token = request.integrityToken,
+                // TODO MJ - add this to the configuration
+                packageName = "cz.kotox.sdk.crypto.app",
+                remoteHost = call.request.origin.remoteHost,
+            )
+        }
+    // --- SECURE BYPASS LOGIC END ---
+    return isValid
 }

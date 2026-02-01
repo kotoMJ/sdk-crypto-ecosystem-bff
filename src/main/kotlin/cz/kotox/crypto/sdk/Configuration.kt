@@ -26,6 +26,9 @@ fun Application.configurePlugins() {
         register(RateLimitName("protect-news")) {
             rateLimiter(limit = 20, refillPeriod = 1.minutes)
         }
+        register(RateLimitName("protect-sentry-android")) {
+            rateLimiter(limit = 20, refillPeriod = 1.minutes)
+        }
     }
 
     install(XForwardedHeaders) {

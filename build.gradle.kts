@@ -35,7 +35,6 @@ dependencies {
     implementation(platform(libs.sentry.bom))
     implementation(libs.sentry.core)
     implementation(libs.sentry.kotlin)
-    // implementation(libs.sentry.ktor.server)
     implementation(libs.sentry.ktor.client)
 
     testImplementation(libs.ktor.server.test.host)

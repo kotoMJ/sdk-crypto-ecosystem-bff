@@ -7,6 +7,8 @@ versions = "0.53.0"
 integrity = "v1-rev20250828-2.0.0"
 oauth2http = "1.41.0"
 
+sentry = "8.30.0"
+
 spotless = "6.25.0"
 detekt = "1.23.6"
 
@@ -26,6 +28,7 @@ ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref 
 ktor-server-rate-limit = { module = "io.ktor:ktor-server-rate-limit", version.ref = "ktor" }
 ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
 ktor-server-forwarded-header = { module = "io.ktor:ktor-server-forwarded-header", version.ref = "ktor" }
+ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
 
 # Ktor Client (to call the News Service)
 ktor-client-core = { module = "io.ktor:ktor-client-core-jvm", version.ref = "ktor" }
@@ -37,6 +40,13 @@ ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negoti
 # Google Play Integrity API (Server-side)
 google-playintegrity = { module = "com.google.apis:google-api-services-playintegrity", version.ref = "integrity" }
 google-oauth2-http = { module = "com.google.auth:google-auth-library-oauth2-http", version.ref = "oauth2http" }
+
+
+# Monitoring
+sentry-bom = { group = "io.sentry", name = "sentry-bom", version.ref = "sentry" }
+sentry-core = { group = "io.sentry", name = "sentry" }
+sentry-kotlin = { group = "io.sentry", name = "sentry-kotlin-extensions" }
+sentry-ktor-client = { group = "io.sentry", name = "sentry-ktor-client" }
 
 # Test
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }

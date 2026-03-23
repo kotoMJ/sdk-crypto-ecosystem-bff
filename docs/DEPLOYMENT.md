@@ -1,4 +1,4 @@
-# Setup commands
+# Deployment (Google Cloud Run)
 
 ## Create docker repository
 One-Time Setup (Do this once per project)
@@ -15,8 +15,9 @@ gcloud artifacts repositories create bff-repo \
 Create Secret "Containers": Creates the empty safe boxes for your sensitive data.
 ```
 gcloud secrets create news-api-key --replication-policy="automatic"
-gcloud secrets create google-sa-json --replication-policy="automatic"
 gcloud secrets create bff-crypto-admin-bypass-secret --replication-policy="automatic"
+gcloud secrets create sentry-dns-crypto-tracker-bff --replication-policy="automatic"
+gcloud secrets create sentry-dns-crypto-tracker-android --replication-policy="automatic"
 ```
 
 ## Grant permissions
@@ -46,8 +47,11 @@ gcloud builds submit --tag us-central1-docker.pkg.dev/bff-sdk-crypto-ecosystem/b
 (Only if keys change) Updates the content inside the secret "safe".
 
 ```
-printf "YOUR_REAL_API_KEY" | gcloud secrets versions add news-api-key --data-file=- 
-printf "YOUR_REAL_ADMIN_SECRET" | gcloud secrets versions add bff-crypto-admin-bypass-secret --data-file=-
+printf "YOUR_REAL_API_KEY_VALUE" | gcloud secrets versions add news-api-key --data-file=- 
+printf "YOUR_REAL_ADMIN_SECRET_VALUE" | gcloud secrets versions add bff-crypto-admin-bypass-secret --data-file=- 
+printf "YOUR_REAL_SENTRY_DNS_CRYPTO_TRACKER_BFF_VALUE" | gcloud secrets versions add sentry-dns-crypto-tracker-bff --data-file=-
+printf "YOUR_REAL_SENTRY_DNS_CRYPTO_TRACKER_ANDROID_VALUE" | gcloud secrets versions add sentry-dns-crypto-tracker-android --data-file=-
+
 ```
 
 ## Deploy to Cloud Run
@@ -60,7 +64,7 @@ gcloud run deploy bff-service \
 --platform=managed \
 --allow-unauthenticated \
 --port=8080 \
---set-secrets="CRYPTO_SDK_NEWS_API_KEY=news-api-key:latest,BFF_CRYPTO_ADMIN_BYPASS_SECRET=bff-crypto-admin-bypass-secret:latest"
+--set-secrets="CRYPTO_SDK_NEWS_API_KEY=news-api-key:latest,BFF_CRYPTO_ADMIN_BYPASS_SECRET=bff-crypto-admin-bypass-secret:latest,SENTRY_DNS_CRYPTO_TRACKER_BFF_VALUE=sentry-dns-crypto-tracker-bff:latest,SENTRY_DNS_CRYPTO_TRACKER_ANDROID_VALUE=sentry-dns-crypto-tracker-android:latest"
 ```
 
 ## Pause(Stop) the service

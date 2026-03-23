@@ -21,3 +21,13 @@ Sentry provides an official `sentry-ktor-server` plugin that auto-instruments Kt
 | `Configuration.kt` | `CallLogging` format that logs `sentry-trace`/`baggage` headers for diagnostics |
 | `Application.kt` | Shutdown hook that flushes and closes Sentry |
 | `logback.xml` | `SentryTracing` logger toggle (set to `TRACE` for verbose diagnostics) |
+
+## Tracing diagnostics
+
+To enable verbose Sentry session-stitching logs (trace headers, sampling decisions, baggage propagation), change the `SentryTracing` logger level in `src/main/resources/logback.xml`:
+
+```xml
+<logger name="SentryTracing" level="TRACE"/>
+```
+
+Set it back to `INFO` (default) to silence them.

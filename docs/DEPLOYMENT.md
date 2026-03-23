@@ -1,4 +1,4 @@
-# Setup commands
+# Deployment (Google Cloud Run)
 
 ## Create docker repository
 One-Time Setup (Do this once per project)

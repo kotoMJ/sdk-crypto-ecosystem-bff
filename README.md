@@ -1,59 +1,36 @@
-# SDK Crypto Ecosystem backend for frontend (BFF)
+# SDK Crypto Ecosystem BFF
 
-Case study of BFF for the [SDK ecosystem](https://github.com/kotoMJ/android-sdk-crypto-ecosystem).
+Backend for Frontend (BFF) for the [SDK Crypto Ecosystem](https://github.com/kotoMJ/android-sdk-crypto-ecosystem) Android app.
 
-This is a classic "Backend for Frontend" (BFF) pattern.   
-A lightweight server that acts as a gatekeeper, verifying the Android device's integrity 
-before allowing access to a protected upstream service (API under real API key).
+A lightweight Ktor server running on Google Cloud Run that acts as a secure gatekeeper — it verifies the Android device's integrity via Google Play Integrity API before proxying requests to upstream services protected by secret API keys. This keeps all secrets on the server side, never exposed to the client.
 
-## Features
+## Endpoints
 
-The main purpose of this backend is to securely handle all secret API keys on backend side instead of client side.
+| Endpoint | Method | Description |
+|---|---|---|
+| `/` | GET | Health check — confirms the BFF is alive |
+| `/api/news` | POST | Proxies [newsapi.org](https://newsapi.org/v2/) requests, guarded by Play Integrity verification |
+| `/sentry/android` | POST | Returns the Android Sentry DSN after Play Integrity verification (rate-limited) |
 
-Mobile application creates token via Google Play Integrity API, backend verify app identity via Google Play Integrity API and eventually
-triggers proxy request to external API secured by real API key (the secret).
+### Diagnostic endpoints (dev only)
 
-Here's a list of features included in this project:
+| Endpoint | Method | Description |
+|---|---|---|
+| `/test` | GET | Sends a test message to Sentry |
+| `/network` | GET | Verifies DNS resolution to the Sentry ingest endpoint |
+| `/sentry` | GET | Reports Sentry SDK status and DSN |
 
-| Name       | Description                                                                |
-|------------|----------------------------------------------------------------------------|
-| /          | (GET)Root endpoint detecting BFF is alive.                                 |
-| /test      | (GET) Dummy test endpoint.                                                 |
-| /api/news  | (POST) https://newsapi.org/v2/ proxy guarded by Google Play Integrity API. |
+## Architecture
 
-## Building & Running
+All protected endpoints require a valid Play Integrity token in the request body. An admin bypass header (`X-Kotox-Bypass-Key`) is available for testing.
 
-To build or run the project, use one of the following tasks:
+The BFF integrates with Sentry for monitoring, including session stitching with the Android app — traces started on the mobile client are linked to BFF transactions via `sentry-trace` and `baggage` header propagation.
 
-| Task                                    | Description                                                          |
-| -----------------------------------------|---------------------------------------------------------------------- |
-| `./gradlew test`                        | Run the tests                                                        |
-| `./gradlew build`                       | Build everything                                                     |
-| `./gradlew buildFatJar`                 | Build an executable JAR of the server with all dependencies included |
-| `./gradlew buildImage`                  | Build the docker image to use with the fat JAR                       |
-| `./gradlew publishImageToLocalRegistry` | Publish the docker image locally                                     |
-| `./gradlew run`                         | Run the server                                                       |
-| `./gradlew runDocker`                   | Run using the local docker image                                     |
+## Documentation
 
-If the server starts successfully, you'll see the following output:
-
-```
-2024-12-04 14:32:45.584 [main] INFO  Application - Application started in 0.303 seconds.
-2024-12-04 14:32:45.682 [main] INFO  Application - Responding at http://0.0.0.0:8080
-```
-
-## Sentry Tracing Diagnostics
-
-To enable verbose Sentry session-stitching logs (trace headers, sampling decisions, baggage propagation), change the `SentryTracing` logger level in `src/main/resources/logback.xml`:
-
-```xml
-<logger name="SentryTracing" level="TRACE"/>
-```
-
-Set it back to `INFO` (default) to silence them.
-
-## Contribution
-
-In order to contribute to this codebase read [Conventions] part.
-
-[Conventions]: docs/CONVENTIONS.md
+| Document | Description |
+|---|---|
+| [Development](docs/DEVELOPMENT.md) | Building, running, and Gradle tasks |
+| [Sentry](docs/SENTRY.md) | Sentry integration architecture and tracing diagnostics |
+| [Deployment](docs/DEPLOYMENT.md) | Google Cloud Run setup, secrets, and deploy commands |
+| [Conventions](docs/CONVENTIONS.md) | Code style, linting, and git hooks |

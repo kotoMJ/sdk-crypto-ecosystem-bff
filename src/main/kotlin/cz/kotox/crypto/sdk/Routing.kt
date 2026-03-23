@@ -29,13 +29,16 @@ fun Application.configureRouting(
         get("/") {
             call.respondText("Kotox crypto BFF here!")
         }
+        // Diagnostic routes — gated behind the admin bypass key
         get("/test") {
+            if (!isAuthorizedByBypassKey(adminBypassSecret)) return@get
             Sentry.captureMessage("BFF Test Route Accessed")
             call.respondText("Test accepted!")
         }
 
         @Suppress("TooGenericExceptionCaught")
         get("/network") {
+            if (!isAuthorizedByBypassKey(adminBypassSecret)) return@get
             try {
                 val stats = java.net.InetAddress.getByName("o4510727626883072.ingest.de.sentry.io")
                 call.respondText("Network OK: Resolved Sentry IP to ${stats.hostAddress}")
@@ -46,12 +49,12 @@ fun Application.configureRouting(
 
         @Suppress("MagicNumber")
         get("/sentry") {
+            if (!isAuthorizedByBypassKey(adminBypassSecret)) return@get
             val isInitialized = Sentry.isEnabled()
             val dsn = Sentry.getCurrentScopes().options.dsn
             application.log.info("Sentry SDK Enabled: $isInitialized, DSN: $dsn")
 
             Sentry.captureMessage("Direct test from BFF at ${java.time.Instant.now()}")
-            // Flush is good, but let's try a very long wait for this test
             Sentry.flush(5000)
             call.respondText("Check your logs for: $dsn")
         }
@@ -99,6 +102,15 @@ fun Application.configureRouting(
             }
         }
     }
+}
+
+private suspend fun RoutingContext.isAuthorizedByBypassKey(adminBypassSecret: String): Boolean {
+    val bypassHeader = call.request.headers["X-Kotox-Bypass-Key"]
+    if (adminBypassSecret.isBlank() || bypassHeader != adminBypassSecret) {
+        call.respond(HttpStatusCode.Forbidden, "Forbidden")
+        return false
+    }
+    return true
 }
 
 private suspend fun RoutingContext.isRequestedByAuthorizedApp(

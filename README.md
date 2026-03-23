@@ -9,10 +9,10 @@ A lightweight Ktor server running on Google Cloud Run that acts as a secure gate
 | Endpoint | Method | Description |
 |---|---|---|
 | `/` | GET | Health check — confirms the BFF is alive |
-| `/api/news` | POST | Proxies [newsapi.org](https://newsapi.org/v2/) requests, guarded by Play Integrity verification |
+| `/api/news` | POST | Proxies [newsapi.org](https://newsapi.org/v2/) requests, guarded by Play Integrity verification (rate-limited) |
 | `/sentry/android` | POST | Returns the Android Sentry DSN after Play Integrity verification (rate-limited) |
 
-### Diagnostic endpoints (dev only)
+### Diagnostic endpoints (dev only, require `X-Kotox-Bypass-Key` header)
 
 | Endpoint | Method | Description |
 |---|---|---|

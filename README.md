@@ -42,6 +42,16 @@ If the server starts successfully, you'll see the following output:
 2024-12-04 14:32:45.682 [main] INFO  Application - Responding at http://0.0.0.0:8080
 ```
 
+## Sentry Tracing Diagnostics
+
+To enable verbose Sentry session-stitching logs (trace headers, sampling decisions, baggage propagation), change the `SentryTracing` logger level in `src/main/resources/logback.xml`:
+
+```xml
+<logger name="SentryTracing" level="TRACE"/>
+```
+
+Set it back to `INFO` (default) to silence them.
+
 ## Contribution
 
 In order to contribute to this codebase read [Conventions] part.

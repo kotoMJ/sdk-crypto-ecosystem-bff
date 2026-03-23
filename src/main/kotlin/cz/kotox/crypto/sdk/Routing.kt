@@ -3,7 +3,6 @@ package cz.kotox.crypto.sdk
 import cz.kotox.crypto.sdk.model.IntegrityCheckRequest
 import cz.kotox.crypto.sdk.service.IntegrityService
 import cz.kotox.crypto.sdk.service.NewsService
-import io.ktor.client.request.post
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.log
@@ -48,8 +47,8 @@ fun Application.configureRouting(
         @Suppress("MagicNumber")
         get("/sentry") {
             val isInitialized = Sentry.isEnabled()
-            val dsn = Sentry.getCurrentHub().options.dsn
-            application.log.info("DEBUG [Sentry]: SDK Enabled: $isInitialized, Using DSN: $dsn")
+            val dsn = Sentry.getCurrentScopes().options.dsn
+            application.log.info("Sentry SDK Enabled: $isInitialized, DSN: $dsn")
 
             Sentry.captureMessage("Direct test from BFF at ${java.time.Instant.now()}")
             // Flush is good, but let's try a very long wait for this test

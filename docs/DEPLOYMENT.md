@@ -87,12 +87,12 @@ gcloud artifacts docker images list us-central1-docker.pkg.dev/bff-sdk-crypto-ec
 
 # Service commands
 
-## Build the docker image
-(Remote Build) Zips your code, sends it to Google, builds the Docker image, and saves it.
-Uses a timestamp tag (e.g., `v20260414-1530`) so each build is uniquely identifiable and you can roll back to a previous version. The cleanup policy automatically keeps only the 3 most recent images.
+## Build and Deploy
+Builds the Docker image with a timestamp tag (e.g., `v20260414-1530`) and immediately deploys it to Cloud Run. If the build fails, the deploy is skipped. The cleanup policy automatically keeps only the 3 most recent images.
 ```
-gcloud builds submit --tag us-central1-docker.pkg.dev/bff-sdk-crypto-ecosystem/bff-repo/bff-service:v$(date +%Y%m%d-%H%M)
+TAG=v$(date +%Y%m%d-%H%M) && gcloud builds submit --tag us-central1-docker.pkg.dev/bff-sdk-crypto-ecosystem/bff-repo/bff-service:$TAG && gcloud run deploy bff-service --image=us-central1-docker.pkg.dev/bff-sdk-crypto-ecosystem/bff-repo/bff-service:$TAG --region=us-central1 --platform=managed --allow-unauthenticated --port=8080 --set-secrets="CRYPTO_SDK_NEWS_API_KEY=news-api-key:latest,BFF_CRYPTO_ADMIN_BYPASS_SECRET=bff-crypto-admin-bypass-secret:latest,SENTRY_DNS_CRYPTO_TRACKER_BFF_VALUE=sentry-dns-crypto-tracker-bff:latest,SENTRY_DNS_CRYPTO_TRACKER_ANDROID_VALUE=sentry-dns-crypto-tracker-android:latest"
 ```
+
 ## Update Secrets
 (Only if keys change) Updates the content inside the secret "safe".
 
@@ -102,13 +102,6 @@ printf "YOUR_REAL_ADMIN_SECRET_VALUE" | gcloud secrets versions add bff-crypto-a
 printf "YOUR_REAL_SENTRY_DNS_CRYPTO_TRACKER_BFF_VALUE" | gcloud secrets versions add sentry-dns-crypto-tracker-bff --data-file=-
 printf "YOUR_REAL_SENTRY_DNS_CRYPTO_TRACKER_ANDROID_VALUE" | gcloud secrets versions add sentry-dns-crypto-tracker-android --data-file=-
 
-```
-
-## Deploy to Cloud Run
-Starts the server using the docker image and the secrets.
-Replace `TAG` with the tag from your latest build (e.g., `v20260414-1530`):
-```
-gcloud run deploy bff-service --image=us-central1-docker.pkg.dev/bff-sdk-crypto-ecosystem/bff-repo/bff-service:TAG --region=us-central1 --platform=managed --allow-unauthenticated --port=8080 --set-secrets="CRYPTO_SDK_NEWS_API_KEY=news-api-key:latest,BFF_CRYPTO_ADMIN_BYPASS_SECRET=bff-crypto-admin-bypass-secret:latest,SENTRY_DNS_CRYPTO_TRACKER_BFF_VALUE=sentry-dns-crypto-tracker-bff:latest,SENTRY_DNS_CRYPTO_TRACKER_ANDROID_VALUE=sentry-dns-crypto-tracker-android:latest"
 ```
 
 ## Pause(Stop) the service
